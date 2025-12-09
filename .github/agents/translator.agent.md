@@ -1,6 +1,7 @@
 ---
 description: 'Translate user input to To English'
 tools: []
+model: Claude Sonnet 4 (copilot)
 handoffs: 
   - label: Analyze Sentiment
     agent: sentiment
