@@ -32,24 +32,32 @@ Expected subagent output (best-effort): YAML in this shape:
 ```yaml
 translatedMessage: <English translation>
 originalLanguage: <language name>
+originalMessage: <the user's original message verbatim>
 ```
 
-If the translator returns extra prose, extract the two fields.
+If the translator returns extra prose, extract the three fields.
 If you can’t determine the original language, set `originalLanguage: unknown`.
 
 ### 2) Sentiment analysis
 Run the `sentiment` agent as a subagent.
 
-Subagent input:
-- the English `translatedMessage` (verbatim)
+Subagent input — pass **all three fields** from the translator output:
+
+```yaml
+translatedMessage: <from translator>
+originalLanguage: <from translator>
+originalMessage: <from translator>
+```
+
+Do NOT pass only the English text. The sentiment agent needs `originalMessage` and `originalLanguage` to forward them to the final responder.
 
 Expected subagent output (best-effort): YAML in this shape:
 
 ```yaml
 sentiment: <Positive|Negative|Neutral>
 explanation: <brief>
-originalMessage: <the original user message>
-originalLanguage: <the original language>
+originalMessage: <the original user message — must match what the translator returned>
+originalLanguage: <the original language — must match what the translator returned>
 ```
 
 If it does not return YAML, still extract a sentiment label (Positive/Negative/Neutral) from its response.
