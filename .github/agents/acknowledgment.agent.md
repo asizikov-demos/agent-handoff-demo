@@ -1,5 +1,6 @@
 ---
 description: 'Acknowledgemen Agent'
+user-invokable: false
 tools: []
 ---
 

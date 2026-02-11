@@ -1,5 +1,6 @@
 ---
 description: 'Support Agent'
+user-invokable: false
 tools: []
 ---
 

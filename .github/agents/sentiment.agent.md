@@ -1,7 +1,8 @@
 ---
 description: 'Sentiment Analysis Agent'
 tools: []
-model: Claude Sonnet 4 (copilot)
+user-invokable: false
+model: Claude Sonnet 4.5
 handoffs: 
   - label: Provide Support Response
     agent: supporter
@@ -15,6 +16,7 @@ handoffs:
     agent: information
     prompt: Provide factual information based on the sentiment analysis
     send: true
+    model: GPT-5-mini (Copilot)
 
 ---
 

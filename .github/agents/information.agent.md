@@ -1,6 +1,7 @@
 ---
 description: 'Informational Agent'
 tools: []
+user-invokable: false
 ---
 
 
