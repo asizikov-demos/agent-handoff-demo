@@ -40,6 +40,36 @@
     .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     ul { padding-left: 20px; }
     @media(max-width:420px) { body { padding: 12px; } section { padding: 14px; } }
+
+    /* Blueprint theme: intentionally fixed palette, independent of app theme */
+    :root { --bp-bg:#0b2a4a; --bp-panel:#0e3358; --bp-line:#4aa3df; --bp-line-dim:rgba(120,190,240,.28); --bp-ink:#e6f3ff; --bp-muted:#8fb8da; --bp-accent:#ffd166; --bp-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace; }
+    body { background-color: var(--bp-bg); color: var(--bp-ink); font-family: var(--bp-mono); font-size: 13px;
+      background-image: linear-gradient(var(--bp-line-dim) 1px, transparent 1px), linear-gradient(90deg, var(--bp-line-dim) 1px, transparent 1px), linear-gradient(rgba(120,190,240,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(120,190,240,.1) 1px, transparent 1px);
+      background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px; }
+    h1, h2, h3 { font-family: var(--bp-mono); font-weight: 600; letter-spacing: .02em; }
+    h1 { text-transform: uppercase; letter-spacing: .08em; }
+    h2 { font-size: 20px; text-transform: uppercase; letter-spacing: .06em; padding-bottom: 8px; border-bottom: 1px dashed var(--bp-line); }
+    h3 { font-size: 16px; color: var(--bp-accent); }
+    .muted, .eyebrow { color: var(--bp-muted); }
+    .eyebrow { color: var(--bp-accent); letter-spacing: .16em; }
+    section { position: relative; background: rgba(11,42,74,.88); border: 1px solid var(--bp-line); border-radius: 0; box-shadow: inset 0 0 0 4px var(--bp-bg), inset 0 0 0 5px var(--bp-line-dim); }
+    section::before, section::after { content: "+"; position: absolute; color: var(--bp-accent); font-size: 14px; line-height: 1; }
+    section::before { top: -8px; left: -5px; }
+    section::after { bottom: -8px; right: -5px; }
+    button { background: var(--bp-panel); color: var(--bp-ink); border: 1px solid var(--bp-line); border-radius: 0; font-family: var(--bp-mono); font-size: 13px; text-transform: uppercase; letter-spacing: .06em; }
+    button:hover { background: #134473; border-color: var(--bp-accent); }
+    button[aria-pressed=true] { background: var(--bp-ink); color: var(--bp-bg); border-color: var(--bp-ink); box-shadow: 0 0 0 3px var(--bp-bg), 0 0 0 4px var(--bp-accent); }
+    :focus-visible { outline-color: var(--bp-accent); }
+    .arrow { color: var(--bp-line); }
+    .branches::before, .branch::before { border-color: var(--bp-line); border-style: dashed; }
+    .endpoint { background: transparent; color: var(--bp-accent); border: 1px dashed var(--bp-accent); border-radius: 0; text-transform: uppercase; letter-spacing: .08em; font-size: 12px; }
+    .branch span { color: var(--bp-accent); letter-spacing: .1em; text-transform: uppercase; }
+    pre { background: rgba(5,22,40,.7); border: 1px solid var(--bp-line-dim); border-radius: 0; color: var(--bp-ink); }
+    code { font-family: var(--bp-mono); color: var(--bp-accent); }
+    td, th { border-bottom: 1px dashed var(--bp-line-dim); }
+    th { color: var(--bp-accent); text-transform: uppercase; letter-spacing: .08em; font-size: 11px; }
+    summary { color: var(--bp-accent); }
+    #error { color: #ff8a8a; }
   </style>
 </head>
 <body>
