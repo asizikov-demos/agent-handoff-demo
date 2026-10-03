@@ -19,7 +19,7 @@ Official docs: https://code.visualstudio.com/docs/copilot/customization/custom-a
 
 ## What this repo implements
 
-This repo implements the same support workflow in **two modes**:
+This repo implements the same support workflow in **three modes**:
 
 ### Manual mode (handoffs)
 
@@ -35,6 +35,18 @@ Step-by-step, with a human clicking each handoff button:
 ### Automated mode (User Support Operator)
 
 Fully automatic — the **User Support Operator** agent orchestrates the same agents as subagents and returns a single final response with no manual steps.
+
+### Dynamic Workflow mode (Copilot CLI)
+
+The project extension in `.github/extensions/user-support-operator/extension.mjs`
+registers the **`user-support-operator`** Dynamic Workflow. It runs the same
+Translate → Sentiment → Respond flow using the existing custom agents, with
+structured translation and sentiment output and named progress phases.
+
+Each step retries once with the default agent if the custom agent returns no
+result. If translation or sentiment still fails, the workflow logs the failure,
+uses the original message or Neutral sentiment respectively, and marks the
+result as `degraded`. A failed responder returns `response: null`.
 
 ### Workflow diagram
 
@@ -120,7 +132,7 @@ Docs section: https://code.visualstudio.com/docs/copilot/customization/custom-ag
 
 ## How to try the demo
 
-This repo ships **two ways** to run the same workflow: a manual handoff flow and a fully automated e2e flow.
+This repo ships **three ways** to run the same workflow: manual handoffs, an automated agent, and a Dynamic Workflow.
 
 ### Option A — Manual flow (handoffs)
 
@@ -140,6 +152,40 @@ You stay in control at every step — each agent responds, then you choose the n
 3. Select **User Support Operator** from the agent picker.
 4. Enter text in any language.
 5. The operator automatically runs Translator → Sentiment → the appropriate responder agent behind the scenes and returns **one final response** — no clicks needed.
+
+### Option C — Dynamic Workflow (Copilot CLI)
+
+1. Open this repository in an extension-enabled Copilot CLI session.
+2. The project extension loads automatically. In an existing session, reload
+   extensions after adding or editing the file.
+3. Ask Copilot to run `user-support-operator` with a message, for example:
+   `run user-support-operator "Everything is very bad"`.
+
+The workflow accepts `{ "message": "Everything is very bad" }` and returns an
+object containing `response`, `sentiment`, `explanation`, `responder`,
+`originalLanguage`, `translatedMessage`, and `degraded`. Successful stages are
+journaled by the runtime for resumed runs.
+
+Dynamic Workflows are an experimental Copilot CLI extension feature, not VS Code
+handoffs. The SDK import is resolved by the CLI; no package installation is
+required. Runs consume AI credits; this workflow does not declare spending or
+subagent limits.
+
+### Workflow viewer canvas
+
+The project extension in `.github/extensions/support-workflow-viewer/` provides
+a read-only **Support workflow** canvas. Ask Copilot to open
+`support-workflow-viewer` to view the translation, sentiment, and responder
+branches. Select an agent node to inspect its call options, structured output
+schema, and full `.agent.md` definition.
+
+The parameter reference distinguishes configured values from available SDK
+options, including input arguments, resource limits, model, reasoning effort,
+and context tier. It does not edit configuration or start billable runs.
+Metadata, output schemas, and routing are shared with the workflow through
+`user-support-operator/config.mjs`; effective runtime model selection is not
+resolved by the viewer. Refresh rereads agent definitions; reload extensions
+after changing shared configuration.
 
 ## Handoffs vs. end-to-end (subagent) flow
 
@@ -162,4 +208,3 @@ This repo demonstrates **both** patterns side by side:
 Docs:
 - Handoffs: https://code.visualstudio.com/docs/copilot/customization/custom-agents#_handoffs
 - Subagents: https://code.visualstudio.com/docs/copilot/agents/subagents
-
