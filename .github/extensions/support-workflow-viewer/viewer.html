@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Support workflow</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 24px; background: var(--background-color-default,#fff); color: var(--text-color-default,#1f2328); font: var(--text-body-medium,14px)/1.5 var(--font-sans,system-ui,sans-serif); }
+    h1 { font-size: var(--text-title-large,26px); line-height: 1.25; margin: 8px 0; }
+    h2 { font-size: 20px; margin: 0 0 14px; }
+    h3 { font-size: 16px; margin: 8px 0; }
+    p { margin: 8px 0; }
+    .muted, .eyebrow { color: var(--text-color-muted,#656d76); }
+    .eyebrow { text-transform: uppercase; font-size: 11px; letter-spacing: .1em; }
+    header { margin-bottom: 24px; }
+    button { background: var(--background-color-default,#fff); color: inherit; border: 1px solid var(--border-color-default,#d0d7de); border-radius: 8px; padding: 10px 14px; font: inherit; cursor: pointer; }
+    button:hover, button[aria-pressed=true] { border-color: var(--true-color-blue,#0969da); }
+    :focus-visible { outline: 2px solid var(--color-focus-outline,#0969da); outline-offset: 3px; }
+    section { border: 1px solid var(--border-color-default,#d0d7de); border-radius: 12px; padding: 20px; margin-bottom: 18px; }
+    .flow { text-align: center; }
+    .flow > button { display: block; margin: auto; min-width: 190px; }
+    .arrow { color: var(--text-color-muted,#656d76); margin: 6px 0; font-size: 20px; }
+    .branches { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; position: relative; padding-top: 18px; }
+    .branches::before { content: ""; position: absolute; top: 0; left: 16.66%; right: 16.66%; border-top: 1px solid var(--border-color-default,#d0d7de); }
+    .branch::before { content: ""; display: block; height: 12px; border-left: 1px solid var(--border-color-default,#d0d7de); width: 0; margin: -18px auto 6px; }
+    .branch button { width: 100%; font-size: 12px; padding: 12px 6px; overflow-wrap: anywhere; }
+    .branch span { display: block; font-size: 11px; color: var(--text-color-muted,#656d76); margin-bottom: 6px; }
+    .endpoint { display: inline-block; padding: 7px 18px; border-radius: 20px; background: var(--true-color-blue-muted,#ddf4ff); }
+    pre { border: 1px solid var(--border-color-default,#d0d7de); border-radius: 6px; padding: 12px; overflow: auto; font: 12px/1.6 var(--font-mono,monospace); }
+    #definition { white-space: pre-wrap; overflow-wrap: anywhere; }
+    code { font-family: var(--font-mono,monospace); font-size: 12px; }
+    table { border-collapse: collapse; width: 100%; font-size: 12px; }
+    td, th { text-align: left; vertical-align: top; padding: 12px 8px; border-bottom: 1px solid var(--border-color-default,#d0d7de); overflow-wrap: anywhere; }
+    th { color: var(--text-color-muted,#656d76); font-weight: 600; }
+    .table-wrap { overflow-x: auto; }
+    details { margin-top: 14px; }
+    summary { cursor: pointer; font-weight: 600; }
+    #error { color: var(--true-color-red,#cf222e); }
+    .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    ul { padding-left: 20px; }
+    @media(max-width:420px) { body { padding: 12px; } section { padding: 14px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="toolbar"><span class="eyebrow">Dynamic workflow / read-only</span><button id="refresh">Refresh</button></div>
+    <h1>Support workflow</h1>
+    <p class="muted" id="subtitle">Loading project configuration...</p>
+    <p id="error" role="alert"></p>
+  </header>
+  <main id="content" hidden>
+    <section><h2>Flow</h2><div class="flow" id="graph"></div><p class="muted">Select a node to inspect its agent configuration and output contract.</p></section>
+    <section aria-live="polite">
+      <div class="eyebrow" id="phase"></div><h2 id="agent-title"></h2><p id="purpose"></p>
+      <h3>Configured call options</h3><pre id="options"></pre>
+      <p class="muted">No explicit model, reasoning effort, or context-tier override. The runtime resolves the effective configuration.</p>
+      <details><summary>Agent definition</summary><p><code id="agent-file"></code></p><pre id="definition"></pre></details>
+    </section>
+    <section><h2>Configured &amp; available parameters</h2>
+      <p class="muted">Available SDK options are listed for reference, not exposed as editable workflow arguments.</p>
+      <div class="table-wrap"><table><thead><tr><th>Parameter / scope</th><th>Configured value</th><th>Available type / behavior</th></tr></thead><tbody id="parameters"></tbody></table></div>
+    </section>
+    <section><h2>Contracts &amp; behavior</h2>
+      <details open><summary>Workflow input schema</summary><pre id="input-schema"></pre></details>
+      <details><summary>Result fields</summary><pre id="result"></pre></details>
+      <ul id="behavior"></ul>
+      <details><summary>Registered metadata</summary><pre id="metadata"></pre></details>
+      <p class="muted">Source: <code id="source"></code></p>
+    </section>
+  </main>
+  <script>
+    let model;
+    let selected = "translator";
+    const byId = (id) => document.getElementById(id);
+    const json = (value) => JSON.stringify(value, null, 2);
+    function selectAgent(id) {
+      selected = id;
+      const agent = model.agents.find((item) => item.id === id);
+      for (const button of document.querySelectorAll("[data-agent]")) button.setAttribute("aria-pressed", String(button.dataset.agent === id));
+      byId("phase").textContent = agent.phase + (agent.sentiment ? " / " + agent.sentiment : "");
+      byId("agent-title").textContent = agent.id;
+      byId("purpose").textContent = agent.purpose;
+      byId("options").textContent = json(agent.options);
+      byId("definition").textContent = agent.definition;
+      byId("agent-file").textContent = agent.file;
+    }
+    function node(agent) {
+      const button = document.createElement("button");
+      button.textContent = agent.id;
+      button.dataset.agent = agent.id;
+      button.setAttribute("aria-pressed", "false");
+      button.onclick = () => selectAgent(agent.id);
+      return button;
+    }
+    function arrow() {
+      const element = document.createElement("div");
+      element.className = "arrow";
+      element.textContent = "\u2193";
+      element.setAttribute("aria-hidden", "true");
+      return element;
+    }
+    function endpoint(text) {
+      const element = document.createElement("div");
+      element.className = "endpoint";
+      element.textContent = text;
+      return element;
+    }
+    function render() {
+      byId("subtitle").textContent = model.meta.name + " / project configuration";
+      const graph = byId("graph");
+      graph.replaceChildren(endpoint("User message"), arrow(), node(model.agents[0]), arrow(), node(model.agents[1]), arrow());
+      const branches = document.createElement("div");
+      branches.className = "branches";
+      for (const agent of model.agents.slice(2)) {
+        const branch = document.createElement("div");
+        branch.className = "branch";
+        const label = document.createElement("span");
+        label.textContent = agent.sentiment;
+        branch.append(label, node(agent), arrow());
+        branches.append(branch);
+      }
+      graph.append(branches, endpoint("Response in original language"));
+      byId("parameters").replaceChildren();
+      for (const parameter of model.parameters) {
+        const row = document.createElement("tr");
+        for (const value of [parameter.name + "\n" + parameter.scope, String(parameter.configured), parameter.type + " \u2014 " + parameter.description]) {
+          const cell = document.createElement("td");
+          cell.textContent = value;
+          row.append(cell);
+        }
+        byId("parameters").append(row);
+      }
+      for (const [id, value] of [["input-schema", model.meta.argsSchema], ["result", model.result], ["metadata", model.meta]]) byId(id).textContent = json(value);
+      byId("source").textContent = model.source;
+      byId("behavior").replaceChildren(...model.behavior.map((text) => {
+        const item = document.createElement("li");
+        item.textContent = text;
+        return item;
+      }));
+      selectAgent(selected);
+      byId("content").hidden = false;
+    }
+    async function refresh() {
+      byId("refresh").disabled = true;
+      byId("error").textContent = "";
+      try {
+        const response = await fetch("/model");
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Could not load workflow configuration.");
+        model = data;
+        render();
+      } catch (error) {
+        byId("error").textContent = error.message;
+      } finally {
+        byId("refresh").disabled = false;
+      }
+    }
+    byId("refresh").onclick = refresh;
+    refresh();
+  </script>
+</body>
+</html>
